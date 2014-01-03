@@ -34,8 +34,9 @@
 			this.innerDiv = $('#' + _innerDivId);
 		}
 
-		this.innerWidth = this.innerDiv.width();
-		this.minLeft = this.outerWidth - this.innerWidth;
+		// 改在mousedown時抓
+		// this.innerWidth = this.innerDiv.width();
+		// this.minLeft = this.outerWidth - this.innerWidth;
 
 		// 前面position先用absolute, 正確抓到其width後, 須再改回relative
 		this.innerDiv.css({position: 'relative'});
@@ -43,10 +44,12 @@
 		this.div.on('mousedown', {obj: this}, function (event) {
 			var obj = event.data.obj;
 
-			// obj.innerWidth = obj.innerDiv.width();
-			// obj.minLeft = obj.outerWidth - obj.innerWidth;
-			// 考慮可能內容在slippable()使用後才產生, 寬度改變, 本想在mousedown時取innerWidth, 但總是跟outerWidth一樣??
-			// 沒辦法? 有必要時, 得在內容重產生後, 設定css寬度??
+			// 避免在slippable()後, 有異動內容改變寬度, 在每次mousedown時須重抓寬度
+			// 欲正確抓到其width, 須暫時先將position改成absolute
+			obj.innerDiv.css({position: 'absolute'});
+			obj.innerWidth = obj.innerDiv.width();
+			obj.minLeft = obj.outerWidth - obj.innerWidth;
+			obj.innerDiv.css({position: 'relative'});
 
 			obj.state.startTime = new Date();
 			obj.state.startXY = {x: event.pageX, y: event.pageY};

@@ -1,0 +1,4 @@
+slippable
+==========
+
+jQuery plugin slippable

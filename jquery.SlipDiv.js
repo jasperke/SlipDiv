@@ -1,7 +1,7 @@
 (function ($) {
 	'use strict';
 
-	function SlipDiv(elm, callback) { // callback為滑動結束時執行的function
+	function SlipDiv(elm, callback) { // callback為滑動時or滑動結束時執行的function
 		this.state = {active: false};
 		this.div = $(elm).css({border: '1px solid #000000', overflow: 'hidden'});
 		this.innerDiv = $(elm).children('div');
@@ -26,13 +26,10 @@
 		this.innerDiv.css({left: '0px'});
 	};
 	SlipDiv.prototype.init = function () {
-		if (this.innerDiv.size() == 1) { // 其下內容只有一個直屬div, 直接使用
-			this.innerDiv.css({position: 'absolute', top: '0px', left: '0px'}); // 必須先用absolute, 才能正確抓其width
-		} else { // 其下無or有多個直屬div, 需再包一層div
-			var _innerDivId = 'slippable_inner_' + Math.round(Math.random() * 10000000);
-			this.div.wrapInner('<div id="' + _innerDivId + '" style="position: absolute; top: 0px; left: 0px;"/>');
-			this.innerDiv = $('#' + _innerDivId);
-		}
+		// 其下內容一律再包一層div
+		var _innerDivId = 'slippable_inner_' + Math.round(Math.random() * 10000000);
+		this.div.wrapInner('<div id="' + _innerDivId + '" style="position: absolute; top: 0px; left: 0px;"/>');
+		this.innerDiv = $('#' + _innerDivId);
 
 		// 改在mousedown時抓
 		// this.innerWidth = this.innerDiv.width();
@@ -61,7 +58,7 @@
 		.on('mouseup', {obj: this}, function (event) {
 			var obj = event.data.obj,
 				distance = event.pageX - obj.state.startXY.x, // 因僅支援左右滑動, 只需考慮x
-				slipped = false,
+				// slipped = false,
 				speed,
 				left,
 				ms;
@@ -71,23 +68,32 @@
 					if (Math.abs(speed) > 200) { // 動作夠快(每秒200px以上)才觸發slip
 						left = parseInt(obj.innerDiv.css('left'), 10) + parseInt(distance * Math.abs(distance) / 100, 10);
 						ms = Math.ceil(Math.abs(distance) / 300) * 1000;
-						obj.innerDiv.animate({left: obj.adjustLeft(left) + 'px'}, ms, 'easeOutCubic', function () {
-							obj.callback.call(obj.div); // callback中的this為slippable那個div的jQuery物件
+						// obj.innerDiv.animate({left: obj.adjustLeft(left) + 'px'}, ms, 'easeOutCubic', function () {
+						// 	obj.callback.call(obj.div); // callback中的this為slippable那個div的jQuery物件
+						// });
+						obj.innerDiv.animate({left: obj.adjustLeft(left) + 'px'}, {
+							duration: ms,
+							easing: 'easeOutCubic',
+							progress: function () {
+								obj.callback.call(obj.div);
+							},
+							complete: function () {
+								obj.callback.call(obj.div);
+							}
 						});
-						slipped = true;
+						// slipped = true;
 					}
 				}
 			}
-			if (!slipped) { // 未滑動, 仍有可能是drag&drop, 也須執行callback
-				obj.callback.call(obj.div);
-			}
-			//slip.endTime = new Date();
-			//slip.endXY = {x: event.pageX, y: event.pageY};
+			// if (!slipped) { // 未滑動, 仍有可能是drag&drop, 也須執行callback
+			// 	obj.callback.call(obj.div);
+			// }
+
 			obj.state.active = false;
 		})
 		.on('mouseout', {obj: this}, function (event) {
-			//slip.endTime = new Date();
 			var obj = event.data.obj;
+			// obj.callback.call(obj.div);
 			obj.state.active = false;
 		})
 		.on('mousemove', {obj: this}, function (event) {
@@ -96,6 +102,7 @@
 			if (obj.state.active) {
 				var left = obj.state.startPos.left + event.pageX - obj.state.startXY.x;
 				obj.innerDiv.css({left: obj.adjustLeft(left) + 'px'});
+				obj.callback.call(obj.div);
 			}
 		});
 	};

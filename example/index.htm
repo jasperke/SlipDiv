@@ -11,8 +11,14 @@
 <script src="../jquery.easing.min.js"></script>
 <script src="../jquery.SlipDiv.min.js"></script>
 <SCRIPT>
+var floatDiv;
+
 $(function(){
-	$('.slippable').slippable();
+  floatDiv=$('#floatDiv');
+	$('.slippable').slippable(function(){
+    var innerDiv=this.children('div');
+    floatDiv.css({left:-parseInt(innerDiv.css('left'),10)+4});
+  });
 })
 </SCRIPT>
 </head>
@@ -20,6 +26,7 @@ $(function(){
 <body leftmargin="10" topmargin="10" marginwidth="10" marginheight="10">
 
 <div class="slippable" style="width:765px; height:298px;">
+  <div id="floatDiv" style="position:absolute; top:4px; left:4px; border:1px solid #ff0000; text-align:center; width:30px; height:288px; background-color:rgba(255, 255, 255, 0.5);">左邊區塊</div>
 	<img src="logo.gif" width="5060" height="298">
 </div>
 <br>

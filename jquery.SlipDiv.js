@@ -1,6 +1,41 @@
 (function ($) {
 	'use strict';
 
+	function touchHandler (e) { // touch event導向mouse event
+		var event = e.originalEvent,
+			touches = event.changedTouches,
+			first = touches[0],
+			type = '';
+		switch (event.type) {
+		case 'touchstart':
+			type = 'mousedown';
+			touchHandler.touchTargetPosition = [first.pageX, first.pageY];
+			break;
+		case 'touchmove':
+			type = 'mousemove';
+			break;
+		case 'touchend':
+			if (touchHandler.touchTargetPosition[0] == first.pageX && touchHandler.touchTargetPosition[0] == first.pageY) {
+				type = 'mouseup';
+			} else {
+				type = 'click';
+			}
+			break;
+		default:
+			return;
+		}
+		//initMouseEvent(type, canBubble, cancelable, view, clickCount,
+		//           screenX, screenY, clientX, clientY, ctrlKey,
+		//           altKey, shiftKey, metaKey, button, relatedTarget);
+		var simulatedEvent = document.createEvent('MouseEvent');
+		simulatedEvent.initMouseEvent(type, true, true, window, 1,
+			first.screenX, first.screenY,
+			first.clientX, first.clientY, false,
+			false, false, false, 0/*left*/, null);
+		first.target.dispatchEvent(simulatedEvent);
+		event.preventDefault();
+	}
+
 	function SlipDiv(elm, callback) { // callback為滑動時or滑動結束時執行的function
 		this.state = {active: false};
 		this.div = $(elm).css({border: '1px solid #000000', overflow: 'hidden'});
@@ -55,6 +90,7 @@
 			obj.innerDiv.stop(true, false); // 停止animate, 如果有在動作的話
 			event.preventDefault();
 		})
+		.on('touchstart touchmove touchend', touchHandler)
 		.on('mouseup', {obj: this}, function (event) {
 			var obj = event.data.obj,
 				distance = event.pageX - obj.state.startXY.x, // 因僅支援左右滑動, 只需考慮x
